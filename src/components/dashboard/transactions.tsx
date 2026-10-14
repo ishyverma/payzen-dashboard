@@ -1,14 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { ArrowDown01Icon, ChartHistogramIcon, Search01Icon, UnfoldMoreIcon } from "@hugeicons/core-free-icons";
-import { EvilLineChart } from "@/components/evilcharts/charts/recharts-line-chart";
-import type { ChartConfig } from "@/components/evilcharts/ui/recharts-chart";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Icon } from "@/components/ui/icon";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ASSETS, compactB, money, sparkline, type Range } from "@/lib/data";
-import { useMounted } from "@/lib/use-media";
 import { cn } from "@/lib/utils";
 import { CoinIcon } from "./coin-icon";
 import { Segmented } from "./segmented";
@@ -20,40 +18,17 @@ const PERIOD_F: Record<Period, number> = { "24H": 1, "7D": 6.4, "30D": 27 };
 const COLS = "grid grid-cols-[52px_175px_152px_150px_171px_153px_157px_minmax(90px,1fr)] items-center";
 const RANGES = (["1D", "7D", "1M", "1Y"] as Range[]).map((r) => ({ value: r, label: r, aria: `Range ${r}` }));
 const RANGE_LABEL: Record<Range, string> = { "1D": "24h", "7D": "7d", "1M": "1m", "1Y": "1y" };
-const GREEN = "#16A34A";
-const RED = "#E5484D";
 const CHECK = "size-[17px] rounded-[5px] border-line2 bg-panel";
 
+const SparkChart = dynamic(() => import("./spark-chart"), {
+  ssr: false,
+  loading: () => <div className="size-full animate-pulse rounded bg-surface2" />,
+});
+
 function Spark({ id, range, up }: { id: string; range: Range; up: boolean }) {
-  const mounted = useMounted();
-  const data = useMemo(() => sparkline(id, range, up), [id, range, up]);
-  const config = useMemo(() => {
-    const c = up ? GREEN : RED;
-    return { v: { label: id, color: c, colors: { light: [c], dark: [c] } } } as unknown as ChartConfig;
-  }, [id, up]);
   return (
-    <div
-      className="h-[32px] w-[120px] overflow-hidden"
-      role="img"
-      aria-label={`${id} ${up ? "up" : "down"} over ${RANGE_LABEL[range]}`}
-    >
-      {!mounted ? (
-        <div className="size-full animate-pulse rounded bg-surface2" />
-      ) : (
-        <EvilLineChart
-          key={`${id}-${range}`}
-          data={data}
-          config={config}
-          curveType="linear"
-          animationType="none"
-          className="aspect-auto h-full w-full"
-          chartProps={{ margin: { top: 3, right: 2, bottom: 3, left: 2 } }}
-        >
-          <EvilLineChart.XAxis dataKey="i" hide />
-          <EvilLineChart.YAxis hide domain={["dataMin", "dataMax"]} />
-          <EvilLineChart.Line dataKey="v" strokeWidth={1.4} />
-        </EvilLineChart>
-      )}
+    <div className="h-[32px] w-[120px] overflow-hidden" role="img" aria-label={`${id} ${up ? "up" : "down"} over ${RANGE_LABEL[range]}`}>
+      <SparkChart id={id} range={range} up={up} />
     </div>
   );
 }

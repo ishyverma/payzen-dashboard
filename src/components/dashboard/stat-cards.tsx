@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "motion/react";
 import { ArrowUpRight01Icon } from "@hugeicons/core-free-icons";
 import { Icon } from "@/components/ui/icon";
 import { COINS, TOP_COINS, type CoinId } from "@/lib/data";
@@ -42,13 +41,10 @@ export function StatCards({ onSelect }: { onSelect: (id: CoinId) => void }) {
                 </p>
                 <div className="mt-[13px] flex h-[28px] gap-[2px]" aria-hidden>
                   {Array.from({ length: BARS }, (_, b) => (
-                    <motion.span
+                    <span
                       key={b}
-                      initial={{ opacity: 0, scaleY: 0.5 }}
-                      animate={{ opacity: 1, scaleY: 1 }}
-                      transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1], delay: 0.15 + b * 0.006 }}
-                      style={{ backgroundColor: b < filled ? c.color : "var(--bar-off)", originY: 1 }}
-                      className="flex-1 rounded-[1.5px]"
+                      style={{ backgroundColor: b < filled ? c.color : "var(--bar-off)", animationDelay: `${150 + b * 6}ms` }}
+                      className="animate-bar flex-1 rounded-[1.5px]"
                     />
                   ))}
                 </div>

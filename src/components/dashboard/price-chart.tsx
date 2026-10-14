@@ -2,11 +2,9 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
 import { BarChartIcon, ChartLineData02Icon, TradeDownIcon, TradeUpIcon } from "@hugeicons/core-free-icons";
-import { EvilLineChart } from "@/components/evilcharts/charts/recharts-line-chart";
-import { EvilBarChart } from "@/components/evilcharts/charts/recharts-bar-chart";
-import type { ChartConfig } from "@/components/evilcharts/ui/recharts-chart";
 import { Icon } from "@/components/ui/icon";
 import { PRICE_PER_UNIT, SERIES, SUMMARY, money, tickLabel, titleLabel, type Range } from "@/lib/data";
 import { useMedia, useMounted } from "@/lib/use-media";
@@ -14,8 +12,10 @@ import { cn } from "@/lib/utils";
 import { CoinIcon } from "./coin-icon";
 import { Segmented } from "./segmented";
 
-const BLUE = "#0582FB";
-const config = { v: { label: "BTC", color: BLUE, colors: { light: [BLUE], dark: [BLUE] } } } as unknown as ChartConfig;
+
+const skeleton = <div className="size-full animate-pulse rounded-lg bg-surface2" />;
+const LineCanvas = dynamic(() => import("./price-canvas").then((m) => m.LineCanvas), { ssr: false, loading: () => skeleton });
+const BarCanvas = dynamic(() => import("./price-canvas").then((m) => m.BarCanvas), { ssr: false, loading: () => skeleton });
 
 const Y_W = 36;
 const X_H = 30;
@@ -109,6 +109,8 @@ export function PriceChart() {
   const sign = (n: number) => `${n >= 0 ? "+" : ""}${n.toFixed(2)}%`;
   const lineX = geo ? geo.l + (k / 24) * geo.w : 0;
   const flip = geo ? geo.l + geo.w - lineX < 190 : false;
+  const bandL = geo ? Math.max(lineX - 37, geo.l) : 0;
+  const bandR = geo ? Math.min(lineX + 37, geo.l + geo.w) : 0;
   const readout = `${titleLabel(range, k)}: ${Math.round(v * PRICE_PER_UNIT).toLocaleString("en-US")} BTC`;
 
   return (
@@ -179,41 +181,17 @@ export function PriceChart() {
         <p className="sr-only" aria-live="polite">{active ? readout : ""}</p>
 
         {!mounted ? (
-          <div className="size-full animate-pulse rounded-lg bg-surface2" />
+          skeleton
         ) : type === "line" ? (
-          <EvilLineChart
-            key={range}
-            data={data}
-            config={config}
-            curveType="linear"
-            className="aspect-auto h-full w-full"
-            chartProps={{ margin: { top: TOP, right: 2, bottom: 0, left: 0 } }}
-          >
-            <EvilLineChart.Grid horizontal vertical strokeDasharray="0" stroke={GRID} {...({ verticalCoordinatesGenerator: vLines } as object)} />
-            <EvilLineChart.XAxis dataKey="k" ticks={narrow ? TICKS_NARROW : TICKS} interval={0} padding={{ left: 0, right: 0 }} height={X_H} tickLine={false} axisLine={false} tick={renderTick} />
-            <EvilLineChart.YAxis domain={[0, 250]} ticks={[0, 50, 100, 150, 200, 250]} width={Y_W} tickMargin={14} tickLine={false} axisLine={false} tick={axisTick} />
-            <EvilLineChart.Line dataKey="v" strokeWidth={1.7} glowing animationType="left-to-right" />
-          </EvilLineChart>
+          <LineCanvas key={range} data={data} narrow={narrow} grid={GRID} tick={TICK} renderTick={renderTick} />
         ) : (
-          <EvilBarChart
-            key={range}
-            data={barData}
-            config={config}
-            className="aspect-auto h-full w-full"
-            chartProps={{ margin: { top: TOP, right: 2, bottom: 0, left: 0 } }}
-          >
-            <EvilBarChart.Grid vertical={false} strokeDasharray="0" stroke={GRID} />
-            <EvilBarChart.XAxis dataKey="label" interval={narrow ? 1 : 0} height={X_H} tickLine={false} axisLine={false} tick={axisTick} />
-            <EvilBarChart.YAxis domain={[0, 250]} ticks={[0, 50, 100, 150, 200, 250]} width={Y_W} tickMargin={14} tickLine={false} axisLine={false} tick={axisTick} />
-            <EvilBarChart.Tooltip />
-            <EvilBarChart.Bar dataKey="v" />
-          </EvilBarChart>
+          <BarCanvas key={range} data={barData} narrow={narrow} grid={GRID} tick={TICK} />
         )}
 
         {/* hover overlay: only while hovering / arrow-keying */}
         {type === "line" && mounted && geo && (
           <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden transition-opacity duration-150 ease-out" style={{ opacity: active ? 1 : 0 }}>
-            <div className="absolute" style={{ left: lineX - 37, width: 75, top: geo.t, height: geo.h, transition: "left 90ms linear" }}>
+            <div className="absolute" style={{ left: bandL, width: bandR - bandL, top: geo.t, height: geo.h, transition: "left 90ms linear, width 90ms linear" }}>
               <div className="absolute inset-0 bg-gradient-to-b from-[#0582FB]/0 to-[#0582FB]/[0.16]" />
               <div className="absolute inset-0 [background-image:radial-gradient(rgb(5_130_251/0.5)_1px,transparent_1.2px)] [background-size:4px_4px] [mask-image:linear-gradient(to_bottom,transparent,black_75%)]" />
               <div className="absolute inset-x-0 bottom-0 h-[3px] bg-[#0582FB]" />

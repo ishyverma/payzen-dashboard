@@ -1,16 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  cacheComponents: true,
-  partialPrefetching: true,
-  turbopack: {
-    rules: {
-      "*.css": {
-        loaders: ["@tailwindcss/turbopack"],
-        as: "*.css",
-      },
-    },
+  poweredByHeader: false,
+  reactStrictMode: true,
+  experimental: {
+    inlineCss: true,
+    optimizePackageImports: ["@hugeicons/react", "@hugeicons/core-free-icons", "motion", "recharts"],
   },
 };
 
