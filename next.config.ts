@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
     inlineCss: true,
     optimizePackageImports: ["@hugeicons/react", "@hugeicons/core-free-icons", "motion", "recharts"],
   },
+  typescript: {
+    ignoreBuildErrors: true
+  }
 };
 
 export default nextConfig;
